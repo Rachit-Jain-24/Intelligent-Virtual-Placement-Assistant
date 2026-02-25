@@ -1,12 +1,13 @@
 "use client";
 
-import { Bell, Search, User, ChevronDown, GraduationCap } from "lucide-react";
+import { Bell, Search, GraduationCap, LogOut, ChevronDown } from "lucide-react";
 import { UserRole } from "./Sidebar";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface NavbarProps {
-    userName: string;
-    role: UserRole;
+    userName?: string;
+    role?: UserRole;
     userYear?: string;
     userProgram?: string;
 }
@@ -23,8 +24,35 @@ const roleLabel: Record<UserRole, string> = {
     alumni: "Alumni",
 };
 
-export function Navbar({ userName, role, userYear, userProgram }: NavbarProps) {
+export function Navbar({ userName: propUserName, role: propRole, userYear: propYear, userProgram: propProgram }: NavbarProps) {
+    const { user, logout } = useAuth();
     const [notifOpen, setNotifOpen] = useState(false);
+    const [userMenuOpen, setUserMenuOpen] = useState(false);
+    const userMenuRef = useRef<HTMLDivElement>(null);
+
+    // Prefer context values; fall back to props (for pages that still pass them directly)
+    const displayName = user?.name ?? propUserName ?? "User";
+    const displayRole = (user?.role ?? propRole ?? "student") as UserRole;
+    const displayYear = user?.year ?? propYear;
+    const displayProgram = user?.program ?? propProgram;
+
+    const initials = displayName
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase();
+
+    // Close user menu on outside click
+    useEffect(() => {
+        function handleClick(e: MouseEvent) {
+            if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+                setUserMenuOpen(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClick);
+        return () => document.removeEventListener("mousedown", handleClick);
+    }, []);
 
     const notifications = [
         { id: 1, msg: "AI Mentor has a new tip for you!", time: "2m ago", type: "info" },
@@ -47,18 +75,18 @@ export function Navbar({ userName, role, userYear, userProgram }: NavbarProps) {
             </div>
 
             {/* Year & Program badge (student only) */}
-            {role === "student" && userYear && (
+            {displayRole === "student" && displayYear && (
                 <div className="hidden md:flex items-center gap-2 rounded-lg bg-secondary px-3 py-1.5">
                     <GraduationCap className="h-4 w-4 text-primary" />
-                    <span className="text-xs font-semibold text-foreground">{userYear}</span>
-                    {userProgram && <span className="text-xs text-muted-foreground">• {userProgram}</span>}
+                    <span className="text-xs font-semibold text-foreground">{displayYear}</span>
+                    {displayProgram && <span className="text-xs text-muted-foreground">• {displayProgram}</span>}
                 </div>
             )}
 
             {/* Notifications */}
             <div className="relative">
                 <button
-                    onClick={() => setNotifOpen(!notifOpen)}
+                    onClick={() => { setNotifOpen(!notifOpen); setUserMenuOpen(false); }}
                     className="relative rounded-full p-2 hover:bg-secondary transition-colors"
                 >
                     <Bell className="h-5 w-5" />
@@ -73,9 +101,7 @@ export function Navbar({ userName, role, userYear, userProgram }: NavbarProps) {
                         <div className="divide-y">
                             {notifications.map((n) => (
                                 <div key={n.id} className="flex items-start gap-3 px-4 py-3 hover:bg-secondary/50 transition-colors cursor-pointer">
-                                    <div className={`mt-1 h-2 w-2 rounded-full shrink-0 ${n.type === "info" ? "bg-blue-500" :
-                                            n.type === "success" ? "bg-green-500" : "bg-yellow-500"
-                                        }`} />
+                                    <div className={`mt-1 h-2 w-2 rounded-full shrink-0 ${n.type === "info" ? "bg-blue-500" : n.type === "success" ? "bg-green-500" : "bg-yellow-500"}`} />
                                     <div>
                                         <p className="text-sm">{n.msg}</p>
                                         <p className="text-xs text-muted-foreground">{n.time}</p>
@@ -91,15 +117,38 @@ export function Navbar({ userName, role, userYear, userProgram }: NavbarProps) {
             </div>
 
             {/* User Menu */}
-            <div className="flex items-center gap-3 rounded-xl border bg-secondary/50 px-3 py-1.5 cursor-pointer hover:bg-secondary transition-colors">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full gradient-primary text-white text-sm font-bold">
-                    {userName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()}
-                </div>
-                <div className="hidden md:block text-left">
-                    <p className="text-sm font-semibold leading-none">{userName}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{roleLabel[role]}</p>
-                </div>
-                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+            <div className="relative" ref={userMenuRef}>
+                <button
+                    onClick={() => { setUserMenuOpen(!userMenuOpen); setNotifOpen(false); }}
+                    className="flex items-center gap-3 rounded-xl border bg-secondary/50 px-3 py-1.5 cursor-pointer hover:bg-secondary transition-colors"
+                >
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full gradient-primary text-white text-sm font-bold">
+                        {initials}
+                    </div>
+                    <div className="hidden md:block text-left">
+                        <p className="text-sm font-semibold leading-none">{displayName}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{roleLabel[displayRole]}</p>
+                    </div>
+                    <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${userMenuOpen ? "rotate-180" : ""}`} />
+                </button>
+
+                {userMenuOpen && (
+                    <div className="absolute right-0 top-12 w-52 rounded-xl border bg-card shadow-xl z-50 overflow-hidden">
+                        <div className="border-b px-4 py-3">
+                            <p className="text-sm font-semibold truncate">{displayName}</p>
+                            <p className="text-xs text-muted-foreground truncate">{user?.email ?? ""}</p>
+                        </div>
+                        <div className="p-1">
+                            <button
+                                onClick={() => { setUserMenuOpen(false); logout(); }}
+                                className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                            >
+                                <LogOut className="h-4 w-4" />
+                                Sign out
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
         </header>
     );

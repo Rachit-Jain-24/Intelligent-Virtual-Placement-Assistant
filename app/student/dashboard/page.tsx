@@ -7,10 +7,13 @@ import { RadarChart } from "@/components/charts/RadarChart";
 import { Progress } from "@/components/ui/Progress";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { useState } from "react";
+import Link from "next/link";
 import {
     Bell, TrendingUp, Target, Code2, Flame, Trophy, Zap,
-    Star, AlertCircle, ChevronRight, BookOpen, GraduationCap
+    Star, AlertCircle, ChevronRight, BookOpen, GraduationCap, Compass, X
 } from "lucide-react";
+
 
 const skillData = [
     { skill: "DSA / Coding", value: 72 },
@@ -70,10 +73,54 @@ const swocPreview = {
 };
 
 export default function StudentDashboard() {
+    const [careerGoalSet, setCareerGoalSet] = useState(false);
     return (
         <DashboardLayout role="student" userName="Rachit Jain" userYear="3rd Year" userProgram="B.Tech CSE (Data Science)">
             <div className="space-y-6">
+                {/* Career Discovery Banner */}
+                {!careerGoalSet ? (
+                    <div className="relative rounded-2xl bg-gradient-to-r from-violet-600/20 via-primary/15 to-transparent border border-primary/30 p-5 overflow-hidden">
+                        <div className="absolute -right-6 -top-6 h-28 w-28 rounded-full bg-primary/10" />
+                        <div className="absolute right-4 bottom-0 h-16 w-16 rounded-full bg-violet-500/10" />
+                        <div className="relative flex items-center justify-between gap-4 flex-wrap">
+                            <div className="flex items-start gap-3">
+                                <div className="rounded-xl bg-primary/20 p-2.5 shrink-0">
+                                    <Compass className="h-6 w-6 text-primary" />
+                                </div>
+                                <div>
+                                    <p className="font-bold text-base">🎯 Discover Your Career Path</p>
+                                    <p className="text-sm text-muted-foreground mt-0.5">
+                                        You haven&apos;t set a career goal yet. Take a 2-minute quiz to get a personalized roadmap tailored to your subjects and interests.
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                                <Link href="/student/role-discovery">
+                                    <Button size="sm" className="whitespace-nowrap">
+                                        Start Career Discovery →
+                                    </Button>
+                                </Link>
+                                <button
+                                    onClick={() => setCareerGoalSet(true)}
+                                    className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary transition-colors"
+                                    title="Dismiss"
+                                >
+                                    <X className="h-4 w-4" />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2.5 w-fit">
+                        <Target className="h-4 w-4 text-primary" />
+                        <span className="text-sm font-medium">Your Goal: <span className="text-primary font-bold">Data Scientist</span></span>
+                        <span className="text-muted-foreground">|</span>
+                        <Link href="/student/role-discovery" className="text-xs text-primary hover:underline underline-offset-2">Change →</Link>
+                    </div>
+                )}
+
                 {/* Greeting Header */}
+
                 <div className="rounded-2xl gradient-primary p-6 text-white overflow-hidden relative">
                     <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/10" />
                     <div className="absolute -right-2 bottom-0 h-20 w-20 rounded-full bg-white/5" />
@@ -286,7 +333,7 @@ export default function StudentDashboard() {
                         {notifications.map((notif) => (
                             <div key={notif.id} className="flex items-start gap-3 rounded-xl border p-3 hover:bg-secondary/50 transition-colors cursor-pointer">
                                 <AlertCircle className={`h-5 w-5 mt-0.5 shrink-0 ${notif.type === "success" ? "text-green-500" :
-                                        notif.type === "warning" ? "text-yellow-500" : "text-blue-500"
+                                    notif.type === "warning" ? "text-yellow-500" : "text-blue-500"
                                     }`} />
                                 <div className="flex-1">
                                     <p className="font-medium text-sm">{notif.title}</p>

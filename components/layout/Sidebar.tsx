@@ -25,9 +25,13 @@ import {
     Building2,
     UserCheck,
     Layers,
-    Microscope,
     Download,
     ChevronRight,
+    Compass,
+    GitBranch,
+    StickyNote,
+    LayoutGrid,
+    Briefcase,
 } from "lucide-react";
 
 export type UserRole = "student" | "admin" | "dean" | "director" | "program_chair" | "faculty_mentor" | "course_coordinator" | "placement_dept" | "alumni";
@@ -39,17 +43,33 @@ interface SidebarProps {
 const studentNavItems = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/student/dashboard", group: "main" },
     { icon: User, label: "My Profile", href: "/student/profile", group: "main" },
+    { icon: Compass, label: "Role Discovery", href: "/student/role-discovery", group: "main" },
     { icon: Map, label: "Career Roadmap", href: "/student/roadmap", group: "main" },
     { icon: FileText, label: "Resume Analyzer", href: "/student/resume-analyzer", group: "prep" },
     { icon: Target, label: "Skills & Insights", href: "/student/skills", group: "prep" },
     { icon: Code2, label: "LeetCode Tracker", href: "/student/leetcode", group: "prep" },
     { icon: Flame, label: "SWOC Analysis", href: "/student/swoc", group: "prep" },
     { icon: Trophy, label: "Motivation Board", href: "/student/motivation", group: "prep" },
-    { icon: Building2, label: "Company Prep", href: "/student/company-prep", group: "placement" },
+    { icon: GitBranch, label: "Curriculum Map", href: "/student/curriculum-map", group: "prep" },
+    { icon: Briefcase, label: "Placement Prep", href: "/student/company-prep", group: "placement" },
     { icon: MessageSquare, label: "AI Mentor", href: "/student/mentor", group: "placement" },
-    { icon: Microscope, label: "Research", href: "/student/research", group: "placement" },
     { icon: BookOpen, label: "4-Year Roadmap", href: "/student/roadmap-4year", group: "placement" },
     { icon: Settings, label: "Settings", href: "/student/settings", group: "other" },
+];
+
+const facultyMentorNavItems = [
+    { icon: LayoutDashboard, label: "Dashboard", href: "/faculty-mentor/dashboard", group: "main" },
+    { icon: Users, label: "My Mentees", href: "/faculty-mentor/mentees", group: "main" },
+    { icon: StickyNote, label: "Add Notes", href: "/faculty-mentor/notes", group: "main" },
+    { icon: Bell, label: "Notifications", href: "/faculty-mentor/notifications", group: "other" },
+    { icon: Settings, label: "Settings", href: "/faculty-mentor/settings", group: "other" },
+];
+
+const coordinatorNavItems = [
+    { icon: LayoutDashboard, label: "Dashboard", href: "/coordinator/dashboard", group: "main" },
+    { icon: BookOpen, label: "Curriculum Manager", href: "/coordinator/curriculum", group: "main" },
+    { icon: LayoutGrid, label: "Career Alignment", href: "/coordinator/alignment", group: "main" },
+    { icon: Settings, label: "Settings", href: "/coordinator/settings", group: "other" },
 ];
 
 const adminNavItems = [
@@ -84,6 +104,8 @@ const groupLabels: Record<string, string> = {
 function getNavItems(role: UserRole) {
     if (role === "student") return studentNavItems;
     if (role === "alumni") return alumniNavItems;
+    if (role === "faculty_mentor") return facultyMentorNavItems;
+    if (role === "course_coordinator") return coordinatorNavItems;
     return adminNavItems;
 }
 

@@ -4,302 +4,526 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { Progress } from "@/components/ui/Progress";
 import { useState } from "react";
 import {
-    Building2, Search, Upload, Star, Target, Code2,
-    ChevronRight, Flame, CheckCircle2, XCircle, Clock, FileText
+    Briefcase, GraduationCap, Code2, CheckCircle2, XCircle,
+    CalendarDays, TrendingUp, Target, Flame, Circle,
+    Clock, ChevronRight, Star, Plus, Trash2, BookOpen
 } from "lucide-react";
 
-const companies = [
+// ──────────────────────────────────────────────────────────────────────────────
+// DATA
+// ──────────────────────────────────────────────────────────────────────────────
+
+const myProfile = { cgpa: 8.7, leetcode: 187, backlogs: 0, currentSem: 6 };
+
+type SemStatus = "past" | "current" | "upcoming";
+type ReadyStatus = "behind" | "on-track" | "ready";
+
+const semesterTimeline = [
     {
-        id: 1, name: "Google", logo: "G", color: "bg-blue-500",
-        roles: ["SDE-1", "SDE-2", "ML Engineer"],
-        minCGPA: 7.5, minLeetcode: 200,
-        skills: ["DSA", "System Design", "Python/Java", "ML Basics"],
-        process: ["Online Test", "3 Tech Rounds", "HR Round"],
-        myReadiness: 45, difficulty: "High", visits: "Dec 2025",
-        jdUploaded: true,
+        sem: "Semester 5",
+        period: "Aug – Oct 2025",
+        semNum: 5,
+        status: "past" as SemStatus,
+        companies: [
+            { name: "TCS", logo: "T", color: "bg-blue-700", ctc: "₹3.36–7 LPA", difficulty: "Low" },
+            { name: "Infosys", logo: "I", color: "bg-indigo-500", ctc: "₹3.6–6.5 LPA", difficulty: "Low" },
+            { name: "Wipro", logo: "W", color: "bg-violet-500", ctc: "₹3.5 LPA", difficulty: "Low" },
+        ],
+        prepGoals: [
+            "Maintain CGPA ≥ 6.0 (no active backlogs)",
+            "Complete 50+ LeetCode Easy problems",
+            "Practice Aptitude & Verbal Ability daily",
+            "Revise basics of one OOP language (Java/Python/C++)",
+        ],
+        myReadyStatus: "ready" as ReadyStatus,
+        note: "Service companies — focus on aptitude + basics. You're already past this.",
     },
     {
-        id: 2, name: "Amazon", logo: "A", color: "bg-orange-500",
-        roles: ["SDE-1", "Data Engineer"],
-        minCGPA: 7.0, minLeetcode: 150,
-        skills: ["DSA", "OOP", "System Design", "SQL"],
-        process: ["OA", "2 Tech Rounds", "LP Round", "HR"],
-        myReadiness: 62, difficulty: "High", visits: "Nov 2025",
-        jdUploaded: true,
+        sem: "Semester 6",
+        period: "Jan – Mar 2026",
+        semNum: 6,
+        status: "current" as SemStatus,
+        companies: [
+            { name: "Capgemini", logo: "C", color: "bg-teal-500", ctc: "₹4.5 LPA", difficulty: "Low-Medium" },
+            { name: "Accenture", logo: "A", color: "bg-purple-500", ctc: "₹4.5 LPA", difficulty: "Low-Medium" },
+            { name: "Cognizant", logo: "C", color: "bg-blue-400", ctc: "₹4 LPA", difficulty: "Low-Medium" },
+        ],
+        prepGoals: [
+            "Solve 100+ LeetCode problems (Easy–Medium)",
+            "Brush up on DBMS, OS basics, CN fundamentals",
+            "Practice game-based & psychometric assessments",
+            "Prepare 2–3 STAR-format HR answers",
+        ],
+        myReadyStatus: "on-track" as ReadyStatus,
+        note: "Current wave! These companies are visiting now. Finish your LeetCode easy-medium streak.",
     },
     {
-        id: 3, name: "Microsoft", logo: "M", color: "bg-green-600",
-        roles: ["SWE", "Data Scientist"],
-        minCGPA: 7.0, minLeetcode: 120,
-        skills: ["DSA", "OOP", "Azure", "Python"],
-        process: ["Online Assessment", "3 Interview Rounds"],
-        myReadiness: 58, difficulty: "Medium-High", visits: "Jan 2026",
-        jdUploaded: true,
+        sem: "Semester 7",
+        period: "Aug – Nov 2026",
+        semNum: 7,
+        status: "upcoming" as SemStatus,
+        companies: [
+            { name: "Amazon", logo: "A", color: "bg-orange-500", ctc: "₹30 LPA", difficulty: "High" },
+            { name: "Microsoft", logo: "M", color: "bg-green-600", ctc: "₹26 LPA", difficulty: "High" },
+            { name: "Goldman Sachs", logo: "GS", color: "bg-blue-900", ctc: "₹20 LPA", difficulty: "High" },
+        ],
+        prepGoals: [
+            "Solve 200+ LeetCode problems (Medium–Hard)",
+            "Study System Design (HLD + LLD basics)",
+            "Revise Amazon's 16 Leadership Principles (STAR format)",
+            "Build 2 strong projects on GitHub",
+            "Intern somewhere — even a 1-month internship counts",
+        ],
+        myReadyStatus: "behind" as ReadyStatus,
+        note: "Start prepping now — 6 months is just enough time for Amazon/Microsoft.",
     },
     {
-        id: 4, name: "TCS", logo: "T", color: "bg-blue-700",
-        roles: ["Systems Engineer", "Digital", "Ninja"],
-        minCGPA: 6.0, minLeetcode: 50,
-        skills: ["Programming Basics", "Aptitude", "English"],
-        process: ["TCS NQT", "Technical Interview", "HR"],
-        myReadiness: 92, difficulty: "Low", visits: "Aug 2025",
-        jdUploaded: true,
-    },
-    {
-        id: 5, name: "Infosys", logo: "I", color: "bg-indigo-500",
-        roles: ["Systems Engineer", "Power Programmer"],
-        minCGPA: 6.5, minLeetcode: 30,
-        skills: ["Coding Basics", "Aptitude", "Communication"],
-        process: ["Infosys Placement Test", "HR Interview"],
-        myReadiness: 88, difficulty: "Low-Medium", visits: "Aug 2025",
-        jdUploaded: false,
-    },
-    {
-        id: 6, name: "Capgemini", logo: "C", color: "bg-teal-500",
-        roles: ["Analyst", "Senior Analyst"],
-        minCGPA: 6.0, minLeetcode: 20,
-        skills: ["Aptitude", "Logical Reasoning", "English"],
-        process: ["Game Based Assessment", "Technical", "HR"],
-        myReadiness: 80, difficulty: "Low-Medium", visits: "Sep 2025",
-        jdUploaded: false,
+        sem: "Semester 8",
+        period: "Jan – Mar 2027",
+        semNum: 8,
+        status: "upcoming" as SemStatus,
+        companies: [
+            { name: "Google", logo: "G", color: "bg-blue-500", ctc: "₹45 LPA", difficulty: "Very High" },
+            { name: "Uber", logo: "U", color: "bg-gray-900", ctc: "₹40 LPA", difficulty: "Very High" },
+            { name: "Adobe", logo: "Ad", color: "bg-red-600", ctc: "₹28 LPA", difficulty: "High" },
+        ],
+        prepGoals: [
+            "250+ LeetCode (Hard problems included)",
+            "Full System Design proficiency (Distributed Systems)",
+            "Strong CS fundamentals — OOPS, OS, DBMS, Networks",
+            "2+ significant projects / open source contributions",
+            "Polish your resume & LinkedIn profile",
+        ],
+        myReadyStatus: "behind" as ReadyStatus,
+        note: "Dream company season. Everything you do in Sem 6–7 builds toward this.",
     },
 ];
 
-export default function CompanyPrepPage() {
-    const [search, setSearch] = useState("");
-    const [selected, setSelected] = useState<typeof companies[0] | null>(companies[0]);
-    const [filter, setFilter] = useState<"all" | "ready" | "developing">("all");
+// Prep checklists per company
+const companyChecklists: Record<string, { task: string; category: string }[]> = {
+    "TCS": [
+        { task: "Complete TCS NQT preparation (IndiaBix)", category: "Aptitude" },
+        { task: "Solve 50 LeetCode Easy problems", category: "Coding" },
+        { task: "Revise OOP basics in Java or Python", category: "Coding" },
+        { task: "Practise verbal ability & email writing", category: "Soft Skills" },
+        { task: "Give 1 mock TCS NQT test", category: "Mock Test" },
+    ],
+    "Infosys": [
+        { task: "Complete HackWithInfy previous papers", category: "Coding" },
+        { task: "Revise quantitative aptitude formulas", category: "Aptitude" },
+        { task: "Practise 5 mock HR interview answers", category: "Soft Skills" },
+        { task: "Know your projects well for technical interview", category: "Projects" },
+    ],
+    "Capgemini": [
+        { task: "Practice SHL-style game-based assessments", category: "Assessment" },
+        { task: "Solve 80 LeetCode Easy–Medium", category: "Coding" },
+        { task: "Revise logical reasoning patterns", category: "Aptitude" },
+        { task: "Prepare 3 STAR-format HR answers", category: "Soft Skills" },
+    ],
+    "Amazon": [
+        { task: "Solve 200+ LeetCode (Arrays, Trees, DP, Graphs)", category: "Coding" },
+        { task: "Study all 16 Amazon Leadership Principles", category: "Behavioural" },
+        { task: "Prepare 10 STAR-format LP stories", category: "Behavioural" },
+        { task: "Revise DBMS: joins, indexing, normalization", category: "CS Basics" },
+        { task: "Study HLD basics: load balancer, caching, queues", category: "System Design" },
+        { task: "Give 3 mock coding interviews", category: "Mock Test" },
+    ],
+    "Microsoft": [
+        { task: "Solve 150+ LeetCode Medium problems", category: "Coding" },
+        { task: "Revise OOP + SOLID principles thoroughly", category: "CS Basics" },
+        { task: "Write clean code — practice on paper", category: "Coding" },
+        { task: "Learn Azure basics (AZ-900 intro)", category: "Cloud" },
+        { task: "Build 1 full-stack project with clean GitHub history", category: "Projects" },
+    ],
+    "Google": [
+        { task: "Solve 250+ LeetCode (Hard included)", category: "Coding" },
+        { task: "Study System Design deeply (Designing Data-Intensive Apps)", category: "System Design" },
+        { task: "Know Big-O for every solution", category: "Coding" },
+        { task: "Master: Tries, Segment Trees, Bit Manipulation", category: "Coding" },
+        { task: "Contribute to 1 open-source project", category: "Projects" },
+        { task: "Give 5+ mock interviews on Pramp / interviewing.io", category: "Mock Test" },
+    ],
+};
 
-    const filtered = companies.filter(c => {
-        const matchSearch = c.name.toLowerCase().includes(search.toLowerCase());
-        const matchFilter =
-            filter === "all" ? true :
-                filter === "ready" ? c.myReadiness >= 75 :
-                    c.myReadiness < 75;
-        return matchSearch && matchFilter;
-    });
+type Tab = "timeline" | "tracker";
 
-    const readinessColor = (v: number) =>
-        v >= 80 ? "text-green-600" : v >= 60 ? "text-yellow-600" : v >= 40 ? "text-orange-500" : "text-red-500";
+const statusConfig = {
+    ready: { label: "Ready ✅", bg: "bg-green-100", text: "text-green-700", border: "border-green-200", dot: "bg-green-500" },
+    "on-track": { label: "On Track 🔄", bg: "bg-yellow-100", text: "text-yellow-700", border: "border-yellow-200", dot: "bg-yellow-500" },
+    behind: { label: "Behind 🔴", bg: "bg-red-100", text: "text-red-600", border: "border-red-200", dot: "bg-red-500" },
+};
 
-    const readinessBg = (v: number) =>
-        v >= 80 ? "bg-green-500" : v >= 60 ? "bg-yellow-500" : v >= 40 ? "bg-orange-500" : "bg-red-400";
+const semStatusStyle = {
+    past: "border-gray-200 bg-gray-50/50 opacity-75",
+    current: "border-primary/40 bg-primary/5 shadow-md ring-1 ring-primary/20",
+    upcoming: "border-gray-200 bg-white",
+};
+
+const ALL_TARGET_COMPANIES = Object.keys(companyChecklists);
+
+// ──────────────────────────────────────────────────────────────────────────────
+// COMPONENT
+// ──────────────────────────────────────────────────────────────────────────────
+
+export default function PlacementPrepPage() {
+    const [tab, setTab] = useState<Tab>("timeline");
+    const [targetCompanies, setTargetCompanies] = useState<string[]>(["Amazon", "Google"]);
+    const [checked, setChecked] = useState<Record<string, Set<number>>>({});
+    const [addingCompany, setAddingCompany] = useState(false);
+
+    const toggleTask = (company: string, idx: number) => {
+        setChecked(prev => {
+            const s = new Set(prev[company] || []);
+            s.has(idx) ? s.delete(idx) : s.add(idx);
+            return { ...prev, [company]: s };
+        });
+    };
+
+    const getProgress = (company: string) => {
+        const tasks = companyChecklists[company]?.length ?? 0;
+        const done = checked[company]?.size ?? 0;
+        return tasks > 0 ? Math.round((done / tasks) * 100) : 0;
+    };
+
+    const addCompany = (name: string) => {
+        if (!targetCompanies.includes(name)) setTargetCompanies(p => [...p, name]);
+        setAddingCompany(false);
+    };
+
+    const removeCompany = (name: string) => setTargetCompanies(p => p.filter(c => c !== name));
+
+    const availableToAdd = ALL_TARGET_COMPANIES.filter(c => !targetCompanies.includes(c));
 
     return (
         <DashboardLayout role="student" userName="Rachit Jain" userYear="3rd Year" userProgram="B.Tech CSE (Data Science)">
             <div className="space-y-6 animate-fade-in-up">
-                <div className="flex items-center justify-between flex-wrap gap-4">
-                    <div>
-                        <h1 className="text-3xl font-bold flex items-center gap-2">
-                            <Building2 className="h-8 w-8 text-primary" /> Company Prep
-                        </h1>
-                        <p className="text-muted-foreground">AI-powered readiness for each company's hiring process</p>
-                    </div>
-                    <Button className="flex items-center gap-2">
-                        <Upload className="h-4 w-4" /> Upload JD (PDF)
-                    </Button>
+
+                {/* Header */}
+                <div>
+                    <h1 className="text-3xl font-bold flex items-center gap-2">
+                        <Briefcase className="h-8 w-8 text-primary" /> Placement Prep
+                    </h1>
+                    <p className="text-muted-foreground mt-1">
+                        Know when companies visit, track your prep, and never miss a deadline
+                    </p>
                 </div>
 
-                {/* Search + Filter */}
-                <div className="flex gap-3 flex-wrap">
-                    <div className="relative flex-1 min-w-[200px]">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <input
-                            type="text"
-                            placeholder="Search companies..."
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                            className="w-full h-9 pl-10 pr-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                        />
-                    </div>
-                    {(["all", "ready", "developing"] as const).map(f => (
+                {/* My Quick Stats */}
+                <div className="grid grid-cols-3 gap-4">
+                    {[
+                        { icon: GraduationCap, label: "My CGPA", value: myProfile.cgpa, color: "text-blue-600", bg: "bg-blue-50 border-blue-100" },
+                        { icon: Code2, label: "LeetCode Solved", value: myProfile.leetcode, color: "text-orange-600", bg: "bg-orange-50 border-orange-100" },
+                        { icon: CheckCircle2, label: "Active Backlogs", value: myProfile.backlogs, color: "text-green-600", bg: "bg-green-50 border-green-100" },
+                    ].map(({ icon: Icon, label, value, color, bg }) => (
+                        <div key={label} className={`rounded-xl border p-4 flex items-center gap-3 ${bg}`}>
+                            <div className="rounded-lg bg-white p-2 shadow-sm border">
+                                <Icon className={`h-5 w-5 ${color}`} />
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground">{label}</p>
+                                <p className={`text-xl font-bold ${color}`}>{value}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Tabs */}
+                <div className="flex gap-1 rounded-xl border bg-secondary/50 p-1 w-fit">
+                    {([
+                        { key: "timeline", label: "📅 Campus Timeline", icon: CalendarDays },
+                        { key: "tracker", label: "✅ My Prep Tracker", icon: Target },
+                    ] as const).map(({ key, label }) => (
                         <button
-                            key={f}
-                            onClick={() => setFilter(f)}
-                            className={`px-4 py-1.5 rounded-lg text-sm font-medium capitalize border transition-colors ${filter === f ? "bg-primary text-white border-primary" : "border-input hover:bg-secondary"
+                            key={key}
+                            onClick={() => setTab(key)}
+                            className={`px-5 py-2 rounded-lg text-sm font-medium transition-all ${tab === key
+                                ? "bg-white shadow-sm text-primary border border-primary/20"
+                                : "text-muted-foreground hover:text-foreground"
                                 }`}
                         >
-                            {f === "all" ? "All Companies" : f === "ready" ? "✅ Ready" : "🔄 Developing"}
+                            {label}
                         </button>
                     ))}
                 </div>
 
-                <div className="grid gap-6 lg:grid-cols-[320px,1fr]">
-                    {/* Company List */}
-                    <div className="space-y-2">
-                        {filtered.map(c => (
-                            <button
-                                key={c.id}
-                                onClick={() => setSelected(c)}
-                                className={`w-full rounded-xl border p-4 text-left transition-all ${selected?.id === c.id
-                                        ? "border-primary/40 bg-primary/5 shadow-sm"
-                                        : "hover:bg-secondary/50"
-                                    }`}
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className={`h-10 w-10 rounded-xl ${c.color} text-white font-bold text-lg flex items-center justify-center shrink-0`}>
-                                        {c.logo}
-                                    </div>
-                                    <div className="flex-1">
-                                        <div className="flex items-center justify-between">
-                                            <p className="font-semibold">{c.name}</p>
-                                            <span className={`text-sm font-bold ${readinessColor(c.myReadiness)}`}>
-                                                {c.myReadiness}%
-                                            </span>
-                                        </div>
-                                        <p className="text-xs text-muted-foreground">{c.roles[0]} • {c.difficulty}</p>
-                                        <div className="mt-1.5 h-1.5 w-full rounded-full bg-secondary overflow-hidden">
-                                            <div className={`h-full ${readinessBg(c.myReadiness)} rounded-full`}
-                                                style={{ width: `${c.myReadiness}%` }} />
-                                        </div>
-                                    </div>
-                                </div>
-                            </button>
-                        ))}
-                        {filtered.length === 0 && (
-                            <p className="text-center py-8 text-muted-foreground text-sm">No companies match your filter.</p>
-                        )}
-                    </div>
+                {/* ── TAB A: CAMPUS TIMELINE ── */}
+                {tab === "timeline" && (
+                    <div className="relative">
+                        {/* Vertical connector line */}
+                        <div className="absolute left-7 top-8 bottom-8 w-0.5 bg-border hidden md:block" />
 
-                    {/* Company Detail */}
-                    {selected ? (
-                        <div className="space-y-4">
-                            {/* Header */}
-                            <Card>
-                                <CardContent className="pt-5">
-                                    <div className="flex items-start gap-4">
-                                        <div className={`h-16 w-16 rounded-2xl ${selected.color} text-white font-black text-3xl flex items-center justify-center shrink-0 shadow-lg`}>
-                                            {selected.logo}
+                        <div className="space-y-5">
+                            {semesterTimeline.map((sem) => {
+                                const isCurrent = sem.status === "current";
+                                const sc = statusConfig[sem.myReadyStatus];
+
+                                return (
+                                    <div key={sem.sem} className="flex gap-5 items-start">
+                                        {/* Timeline dot */}
+                                        <div className="relative hidden md:flex flex-col items-center shrink-0 mt-5">
+                                            <div className={`h-3.5 w-3.5 rounded-full border-2 border-white shadow-md z-10 ${sc.dot} ${isCurrent ? "scale-125 ring-4 ring-primary/20" : ""}`} />
                                         </div>
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-3 flex-wrap">
-                                                <h2 className="text-2xl font-bold">{selected.name}</h2>
-                                                <Badge variant={selected.myReadiness >= 80 ? "success" : selected.myReadiness >= 60 ? "warning" : "danger"}>
-                                                    {selected.myReadiness >= 80 ? "Ready" : selected.myReadiness >= 60 ? "Almost Ready" : "Needs Work"}
-                                                </Badge>
-                                                {selected.jdUploaded && <Badge variant="info">JD Available</Badge>}
+
+                                        {/* Card */}
+                                        <Card className={`flex-1 border-2 transition-all ${semStatusStyle[sem.status]}`}>
+                                            <CardHeader className="pb-3">
+                                                <div className="flex items-start justify-between flex-wrap gap-3">
+                                                    <div>
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <CardTitle className="text-lg">{sem.sem}</CardTitle>
+                                                            {isCurrent && (
+                                                                <span className="rounded-full bg-primary text-white text-xs font-bold px-2.5 py-0.5 animate-pulse-glow">
+                                                                    CURRENT
+                                                                </span>
+                                                            )}
+                                                            {sem.status === "past" && (
+                                                                <span className="rounded-full bg-gray-200 text-gray-500 text-xs font-medium px-2.5 py-0.5">
+                                                                    PASSED
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
+                                                            <Clock className="h-3.5 w-3.5" /> {sem.period}
+                                                        </p>
+                                                    </div>
+                                                    <div className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${sc.bg} ${sc.text} ${sc.border}`}>
+                                                        <div className={`h-2 w-2 rounded-full ${sc.dot}`} />
+                                                        {sc.label}
+                                                    </div>
+                                                </div>
+                                            </CardHeader>
+
+                                            <CardContent className="space-y-4">
+                                                {/* Companies visiting */}
+                                                <div>
+                                                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                                                        Companies Visiting
+                                                    </p>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {sem.companies.map((c) => (
+                                                            <div key={c.name} className="flex items-center gap-2 rounded-xl border bg-white px-3 py-1.5 shadow-sm">
+                                                                <div className={`h-6 w-6 rounded-md ${c.color} text-white text-xs font-bold flex items-center justify-center`}>
+                                                                    {c.logo}
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-sm font-medium leading-none">{c.name}</p>
+                                                                    <p className="text-xs text-muted-foreground">{c.ctc}</p>
+                                                                </div>
+                                                                <Badge variant={c.difficulty === "Very High" ? "danger" : c.difficulty === "High" ? "warning" : c.difficulty === "Low" ? "success" : "default"} className="ml-1 text-xs">
+                                                                    {c.difficulty}
+                                                                </Badge>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                {/* Prep goals */}
+                                                <div>
+                                                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                                                        What to Prepare
+                                                    </p>
+                                                    <div className="grid gap-1.5 sm:grid-cols-2">
+                                                        {sem.prepGoals.map((goal, i) => (
+                                                            <div key={i} className="flex items-start gap-2 text-sm">
+                                                                <ChevronRight className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                                                                <span>{goal}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                {/* Note */}
+                                                <div className={`rounded-xl border px-4 py-2.5 text-sm flex items-start gap-2 ${isCurrent ? "border-primary/20 bg-primary/5 text-primary" : "border-border bg-secondary/40 text-muted-foreground"}`}>
+                                                    <Flame className={`h-4 w-4 shrink-0 mt-0.5 ${isCurrent ? "text-primary" : "text-muted-foreground"}`} />
+                                                    {sem.note}
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+
+                {/* ── TAB C: PREP TRACKER ── */}
+                {tab === "tracker" && (
+                    <div className="space-y-5">
+                        {/* Add company row */}
+                        <div className="flex items-center gap-3 flex-wrap">
+                            <p className="text-sm font-medium text-muted-foreground">Tracking {targetCompanies.length} companies:</p>
+                            {!addingCompany ? (
+                                <button
+                                    onClick={() => setAddingCompany(true)}
+                                    className="flex items-center gap-1.5 rounded-lg border border-dashed border-primary/40 px-3 py-1.5 text-sm text-primary hover:bg-primary/5 transition-colors"
+                                >
+                                    <Plus className="h-3.5 w-3.5" /> Add company
+                                </button>
+                            ) : (
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    {availableToAdd.map(name => (
+                                        <button
+                                            key={name}
+                                            onClick={() => addCompany(name)}
+                                            className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-1 text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
+                                        >
+                                            + {name}
+                                        </button>
+                                    ))}
+                                    <button onClick={() => setAddingCompany(false)} className="text-xs text-muted-foreground hover:underline">cancel</button>
+                                </div>
+                            )}
+                        </div>
+
+                        {targetCompanies.length === 0 && (
+                            <div className="rounded-xl border border-dashed p-12 text-center text-muted-foreground">
+                                <Star className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                                <p>No target companies yet. Add one to start tracking your prep!</p>
+                            </div>
+                        )}
+
+                        <div className="grid gap-5 md:grid-cols-2">
+                            {targetCompanies.map(company => {
+                                const tasks = companyChecklists[company] ?? [];
+                                const done = checked[company]?.size ?? 0;
+                                const total = tasks.length;
+                                const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+                                const readyStatus = pct >= 80 ? "ready" : pct >= 40 ? "on-track" : "behind";
+                                const sc = statusConfig[readyStatus];
+
+                                // Group tasks by category
+                                const categories: Record<string, { task: string; idx: number }[]> = {};
+                                tasks.forEach((t, i) => {
+                                    if (!categories[t.category]) categories[t.category] = [];
+                                    categories[t.category].push({ task: t.task, idx: i });
+                                });
+
+                                return (
+                                    <Card key={company} className="border-2 border-border hover:border-primary/30 transition-colors">
+                                        <CardHeader className="pb-3">
+                                            <div className="flex items-center justify-between">
+                                                <CardTitle className="text-lg flex items-center gap-2">
+                                                    <BookOpen className="h-5 w-5 text-primary" />
+                                                    {company}
+                                                </CardTitle>
+                                                <button
+                                                    onClick={() => removeCompany(company)}
+                                                    className="rounded-lg p-1.5 text-muted-foreground hover:bg-red-50 hover:text-red-500 transition-colors"
+                                                    title="Remove"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </button>
                                             </div>
-                                            <p className="text-muted-foreground text-sm mt-1">
-                                                Roles: {selected.roles.join(", ")} • Expected Visit: {selected.visits}
+
+                                            {/* Progress ring + bar */}
+                                            <div className="flex items-center gap-4 mt-2">
+                                                {/* Ring */}
+                                                <div className="relative h-16 w-16 shrink-0">
+                                                    <svg className="h-16 w-16 -rotate-90" viewBox="0 0 64 64">
+                                                        <circle cx="32" cy="32" r="26" fill="none" stroke="currentColor" strokeWidth="6" className="text-secondary" />
+                                                        <circle
+                                                            cx="32" cy="32" r="26" fill="none"
+                                                            stroke={pct >= 80 ? "#16a34a" : pct >= 40 ? "#ca8a04" : "#ef4444"}
+                                                            strokeWidth="6"
+                                                            strokeDasharray={`${2 * Math.PI * 26}`}
+                                                            strokeDashoffset={`${2 * Math.PI * 26 * (1 - pct / 100)}`}
+                                                            strokeLinecap="round"
+                                                            className="transition-all duration-500"
+                                                        />
+                                                    </svg>
+                                                    <div className="absolute inset-0 flex items-center justify-center">
+                                                        <span className={`text-sm font-bold ${pct >= 80 ? "text-green-600" : pct >= 40 ? "text-yellow-600" : "text-red-500"}`}>
+                                                            {pct}%
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex-1">
+                                                    <div className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold mb-2 ${sc.bg} ${sc.text} ${sc.border}`}>
+                                                        <div className={`h-1.5 w-1.5 rounded-full ${sc.dot}`} />
+                                                        {sc.label}
+                                                    </div>
+                                                    <p className="text-sm text-muted-foreground">{done} of {total} tasks done</p>
+                                                </div>
+                                            </div>
+                                        </CardHeader>
+
+                                        <CardContent className="space-y-4">
+                                            {Object.entries(categories).map(([category, catTasks]) => (
+                                                <div key={category}>
+                                                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">{category}</p>
+                                                    <div className="space-y-1.5">
+                                                        {catTasks.map(({ task, idx }) => {
+                                                            const isChecked = checked[company]?.has(idx) ?? false;
+                                                            return (
+                                                                <button
+                                                                    key={idx}
+                                                                    onClick={() => toggleTask(company, idx)}
+                                                                    className={`flex w-full items-start gap-2.5 rounded-lg border p-2.5 text-left text-sm transition-all ${isChecked
+                                                                        ? "border-green-200 bg-green-50"
+                                                                        : "border-border hover:bg-secondary/50"
+                                                                        }`}
+                                                                >
+                                                                    {isChecked
+                                                                        ? <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
+                                                                        : <Circle className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                                                                    }
+                                                                    <span className={isChecked ? "line-through text-muted-foreground" : ""}>{task}</span>
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            ))}
+
+                                            {/* Motivational footer */}
+                                            {pct === 100 && (
+                                                <div className="rounded-xl bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700 font-medium text-center">
+                                                    🎉 You're fully prepped for {company}! Go get it!
+                                                </div>
+                                            )}
+                                            {pct > 0 && pct < 100 && (
+                                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                    <TrendingUp className="h-3.5 w-3.5 text-primary" />
+                                                    {total - done} task{total - done !== 1 ? "s" : ""} left to complete your {company} prep
+                                                </div>
+                                            )}
+                                        </CardContent>
+                                    </Card>
+                                );
+                            })}
+                        </div>
+
+                        {/* Overall summary */}
+                        {targetCompanies.length > 0 && (
+                            <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-transparent">
+                                <CardContent className="pt-4 pb-4">
+                                    <div className="flex items-center justify-between flex-wrap gap-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="rounded-xl bg-primary/10 p-2.5">
+                                                <Star className="h-5 w-5 text-primary" />
+                                            </div>
+                                            <div>
+                                                <p className="font-semibold">Overall Placement Readiness</p>
+                                                <p className="text-sm text-muted-foreground">Averaged across all your target companies</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-3xl font-bold text-primary">
+                                                {targetCompanies.length > 0
+                                                    ? Math.round(targetCompanies.reduce((sum, c) => sum + getProgress(c), 0) / targetCompanies.length)
+                                                    : 0}%
                                             </p>
-                                            <div className="mt-3">
-                                                <div className="flex justify-between text-sm mb-1">
-                                                    <span className="font-medium">My Readiness</span>
-                                                    <span className={`font-bold ${readinessColor(selected.myReadiness)}`}>{selected.myReadiness}%</span>
-                                                </div>
-                                                <div className="h-3 w-full rounded-full bg-secondary overflow-hidden">
-                                                    <div className={`h-full ${readinessBg(selected.myReadiness)} rounded-full progress-animated`}
-                                                        style={{ width: `${selected.myReadiness}%` }} />
-                                                </div>
-                                            </div>
+                                            <p className="text-xs text-muted-foreground">ready</p>
                                         </div>
                                     </div>
                                 </CardContent>
                             </Card>
-
-                            <div className="grid gap-4 md:grid-cols-2">
-                                {/* Eligibility */}
-                                <Card>
-                                    <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Star className="h-4 w-4 text-yellow-500" /> Eligibility</CardTitle></CardHeader>
-                                    <CardContent className="space-y-3">
-                                        <div className="flex items-center justify-between p-2 rounded-lg bg-secondary">
-                                            <span className="text-sm">Min CGPA</span>
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-bold">{selected.minCGPA}</span>
-                                                {8.7 >= selected.minCGPA
-                                                    ? <CheckCircle2 className="h-4 w-4 text-green-500" />
-                                                    : <XCircle className="h-4 w-4 text-red-500" />}
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center justify-between p-2 rounded-lg bg-secondary">
-                                            <span className="text-sm">Min LeetCode</span>
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-bold">{selected.minLeetcode}</span>
-                                                {187 >= selected.minLeetcode
-                                                    ? <CheckCircle2 className="h-4 w-4 text-green-500" />
-                                                    : <XCircle className="h-4 w-4 text-red-500" />}
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center justify-between p-2 rounded-lg bg-secondary">
-                                            <span className="text-sm">Backlogs</span>
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-bold">0</span>
-                                                <CheckCircle2 className="h-4 w-4 text-green-500" />
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-
-                                {/* Required Skills */}
-                                <Card>
-                                    <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Target className="h-4 w-4 text-primary" /> Required Skills</CardTitle></CardHeader>
-                                    <CardContent>
-                                        <div className="space-y-2">
-                                            {selected.skills.map(skill => (
-                                                <div key={skill} className="flex items-center gap-2">
-                                                    <div className={`h-2 w-2 rounded-full ${["Python", "React", "SQL", "Machine Learning", "Git"].includes(skill) ? "bg-green-500" : "bg-red-400"}`} />
-                                                    <span className="text-sm">{skill}</span>
-                                                    <span className={`text-xs ml-auto font-medium ${["Python", "React", "SQL", "Machine Learning", "Git"].includes(skill) ? "text-green-600" : "text-red-500"}`}>
-                                                        {["Python", "React", "SQL", "Machine Learning", "Git"].includes(skill) ? "✓ Have it" : "✗ Missing"}
-                                                    </span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </CardContent>
-                                </Card>
-
-                                {/* Hiring Process */}
-                                <Card>
-                                    <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Clock className="h-4 w-4 text-blue-500" /> Hiring Process</CardTitle></CardHeader>
-                                    <CardContent>
-                                        <div className="space-y-2">
-                                            {selected.process.map((step, i) => (
-                                                <div key={i} className="flex items-center gap-3">
-                                                    <div className="h-6 w-6 rounded-full bg-primary/10 text-primary text-xs font-bold flex items-center justify-center shrink-0">
-                                                        {i + 1}
-                                                    </div>
-                                                    <span className="text-sm">{step}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </CardContent>
-                                </Card>
-
-                                {/* AI Tip */}
-                                <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
-                                    <CardHeader><CardTitle className="flex items-center gap-2 text-base"><Flame className="h-4 w-4 text-orange-500" /> AI Prep Tip</CardTitle></CardHeader>
-                                    <CardContent>
-                                        <p className="text-sm text-muted-foreground">
-                                            {selected.myReadiness >= 80
-                                                ? `You're well-prepared for ${selected.name}! Focus on mock interviews and behavioral questions. Review their leadership principles.`
-                                                : selected.myReadiness >= 60
-                                                    ? `Good progress! To close the gap for ${selected.name}, focus on: ${selected.skills.filter(s => !["Python", "React", "SQL"].includes(s)).slice(0, 2).join(" and ")}. Aim for ${selected.minLeetcode + 30} LeetCode problems.`
-                                                    : `Start with the fundamentals for ${selected.name}. Practice ${selected.minLeetcode} LeetCode problems in Arrays, Trees, and DP. Your CGPA is good — focus on coding skills.`}
-                                        </p>
-                                        <div className="mt-3 flex gap-2">
-                                            <Button size="sm" className="flex items-center gap-1.5">
-                                                <Code2 className="h-3.5 w-3.5" /> Practice Problems
-                                            </Button>
-                                            <Button size="sm" variant="outline" className="flex items-center gap-1.5">
-                                                <FileText className="h-3.5 w-3.5" /> View JD
-                                            </Button>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="flex items-center justify-center h-64 text-muted-foreground">
-                            <div className="text-center">
-                                <Building2 className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                                <p>Select a company to see your readiness details</p>
-                            </div>
-                        </div>
-                    )}
-                </div>
+                        )}
+                    </div>
+                )}
             </div>
         </DashboardLayout>
     );

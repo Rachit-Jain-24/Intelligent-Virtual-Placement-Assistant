@@ -1,0 +1,274 @@
+// ─── Prisma Schema — VPA Dashboard ───────────────────────────────────────────
+// Database: SQLite (dev) → swap to PostgreSQL for production (change provider + DATABASE_URL)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─── ENUMS ────────────────────────────────────────────────────────────────────
+// SQLite doesn't support native enums — we use String with validation in app code
+
+// Role values: student | faculty_mentor | course_coordinator | admin | dean | director | placement_dept | alumni | program_chair
+
+// ─── USER (Auth + base identity) ──────────────────────────────────────────────
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String   // hashed with bcrypt in production
+  role      String   @default("student")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  student        Student?
+  facultyMentor  FacultyMentor?
+  alumni         Alumni?
+  notifications  Notification[]
+  sentNotes      MentorNote[]   @relation("NoteAuthor")
+}
+
+// ─── STUDENT PROFILE ──────────────────────────────────────────────────────────
+model Student {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Academic
+  department         String   @default("CSE")
+  program            String   @default("B.Tech CSE (Data Science)")
+  currentYear        Int      @default(1)       // 1–4
+  currentSem         Int      @default(1)       // 1–8
+  cgpa               Float    @default(0)
+  activeBacklogs     Int      @default(0)
+
+  // Placement readiness
+  readinessScore     Int      @default(0)       // 0–100
+  placementProbability Float  @default(0)       // 0–1
+  riskLevel          String   @default("medium") // low | medium | high
+
+  // LeetCode
+  leetcodeUsername   String?
+  leetcodeSolved     Int      @default(0)
+  leetcodeEasy       Int      @default(0)
+  leetcodeMedium     Int      @default(0)
+  leetcodeHard       Int      @default(0)
+  leetcodeStreak     Int      @default(0)
+  leetcodeLastSync   DateTime?
+
+  // GitHub
+  githubUsername     String?
+  githubRepos        Int      @default(0)
+  githubCommits      Int      @default(0)
+
+  // Career goal
+  careerGoal         String?  // e.g. "Software Development Engineer"
+
+  // SWOC self-assessment (stored as JSON string for SQLite)
+  swocData           String?  // JSON: { strengths: [], weaknesses: [], ... }
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // Relations
+  skills             Skill[]
+  roadmapMilestones  RoadmapMilestone[]
+  prepTasks          PrepTask[]
+  applications       Application[]
+  mentorNotes        MentorNote[]       @relation("StudentNotes")
+  mentorAssignments  MentorAssignment[] @relation("MentorStudent")
+}
+
+// ─── SKILLS ───────────────────────────────────────────────────────────────────
+model Skill {
+  id          String   @id @default(cuid())
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  name        String
+  category    String   // technical | soft | domain
+  level       Int      @default(0)    // 0–100
+  verified    Boolean  @default(false)
+  source      String?  // self | linkedin | assessment
+
+  createdAt   DateTime @default(now())
+}
+
+// ─── ROADMAP MILESTONES ────────────────────────────────────────────────────────
+model RoadmapMilestone {
+  id          String   @id @default(cuid())
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  year        Int       // 1–4
+  semester    Int       // 1–8
+  title       String
+  description String?
+  completed   Boolean  @default(false)
+  dueDate     DateTime?
+  completedAt DateTime?
+  category    String   @default("general") // academic | skill | placement | project
+
+  createdAt   DateTime @default(now())
+}
+
+// ─── PREP TASKS (Placement Prep Tracker checklist) ────────────────────────────
+model PrepTask {
+  id          String   @id @default(cuid())
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  company     String   // "Google", "Amazon" etc.
+  task        String
+  category    String   // Coding | Aptitude | Soft Skills | System Design | Mock Test
+  completed   Boolean  @default(false)
+  completedAt DateTime?
+
+  createdAt   DateTime @default(now())
+}
+
+// ─── CAMPUS JOBS / JDs ────────────────────────────────────────────────────────
+model Job {
+  id             String   @id @default(cuid())
+  company        String
+  companyLogo    String?  // single letter or URL
+  companyColor   String?  // tailwind bg class
+  type           String   @default("Service") // Product | Service | Startup | PSU
+  ctc            String                       // "₹30 LPA"
+  roles          String                       // JSON array stored as string: ["SDE-1","ML Engineer"]
+  minCgpa        Float    @default(6.0)
+  noBacklogs     Boolean  @default(true)
+  minLeetcode    Int      @default(0)
+  skills         String                       // JSON: ["DSA","Python"]
+  process        String                       // JSON: ["OA","Tech Round","HR"]
+  tips           String                       // JSON: ["Tip 1","Tip 2"]
+  visitSemester  String?                      // "Sem 7 (Dec 2025)"
+  difficulty     String   @default("Medium")  // Low | Low-Medium | Medium | High | Very High
+  isActive       Boolean  @default(true)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  applications   Application[]
+}
+
+// ─── APPLICATIONS ─────────────────────────────────────────────────────────────
+model Application {
+  id          String   @id @default(cuid())
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  jobId       String
+  job         Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  status      String   @default("applied")  // applied | shortlisted | interviewing | offered | rejected
+  appliedAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  notes       String?
+}
+
+// ─── FACULTY MENTOR ───────────────────────────────────────────────────────────
+model FacultyMentor {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  department  String
+  designation String?
+
+  createdAt   DateTime @default(now())
+
+  assignments MentorAssignment[]
+}
+
+// ─── MENTOR ASSIGNMENTS ───────────────────────────────────────────────────────
+model MentorAssignment {
+  id         String        @id @default(cuid())
+  mentorId   String
+  mentor     FacultyMentor @relation(fields: [mentorId], references: [id], onDelete: Cascade)
+  studentId  String
+  student    Student       @relation("MentorStudent", fields: [studentId], references: [id], onDelete: Cascade)
+
+  assignedAt DateTime      @default(now())
+
+  @@unique([mentorId, studentId])
+}
+
+// ─── MENTOR NOTES ─────────────────────────────────────────────────────────────
+model MentorNote {
+  id        String   @id @default(cuid())
+  authorId  String
+  author    User     @relation("NoteAuthor", fields: [authorId], references: [id])
+  studentId String
+  student   Student  @relation("StudentNotes", fields: [studentId], references: [id], onDelete: Cascade)
+
+  content   String
+  isPrivate Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+}
+
+// ─── NOTIFICATIONS ────────────────────────────────────────────────────────────
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  message   String
+  type      String   @default("info")  // info | success | warning | danger
+  read      Boolean  @default(false)
+  link      String?
+
+  createdAt DateTime @default(now())
+}
+
+// ─── ALUMNI ───────────────────────────────────────────────────────────────────
+model Alumni {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  graduationYear Int
+  currentCompany String?
+  currentRole    String?
+  location       String?
+  linkedinUrl    String?
+  willingToMentor Boolean @default(false)
+  bio            String?
+
+  createdAt      DateTime @default(now())
+}
+
+// ─── CURRICULUM SUBJECTS ──────────────────────────────────────────────────────
+model Subject {
+  id           String   @id @default(cuid())
+  name         String
+  code         String   @unique
+  semester     Int
+  credits      Int      @default(3)
+  department   String
+  description  String?
+
+  // Career relevance stored as JSON: { "SDE": 90, "Data Scientist": 75 }
+  careerRelevance String?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// ─── CAREER ROLES ─────────────────────────────────────────────────────────────
+model CareerRole {
+  id            String   @id @default(cuid())
+  title         String   @unique  // "Software Development Engineer"
+  category      String            // Tech | Finance | Consulting | Research
+  avgCTC        String?           // "₹12–45 LPA"
+  description   String?
+  requiredSkills String           // JSON: ["DSA","System Design","Python"]
+  roadmapSteps  String?           // JSON: step-by-step guide
+
+  createdAt     DateTime @default(now())
+}
